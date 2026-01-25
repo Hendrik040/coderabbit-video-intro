@@ -1,0 +1,23 @@
+{
+  "name": "coderabbit-video-intro",
+  "version": "1.0.0",
+  "description": "CodeRabbit YouTube intro video using Remotion",
+  "main": "index.js",
+  "scripts": {
+    "start": "remotion studio src/index.ts",
+    "build": "remotion render src/index.ts CodeRabbitIntro out/intro.mp4",
+    "preview": "remotion preview src/index.ts"
+  },
+  "keywords": ["remotion", "video", "coderabbit", "intro"],
+  "author": "CodeRabbit",
+  "license": "MIT",
+  "dependencies": {
+    "@remotion/bundler": "^4.0.409",
+    "@remotion/cli": "^4.0.409",
+    "@types/react": "^19.2.9",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "remotion": "^4.0.409",
+    "typescript": "^5.9.3"
+  }
+}

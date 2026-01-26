@@ -6,6 +6,8 @@
   "scripts": {
     "start": "remotion studio src/index.ts",
     "build": "remotion render src/index.ts CodeRabbitIntro out/intro.mp4",
+    "build:intro": "remotion render src/index.ts CodeRabbitIntro out/intro.mp4",
+    "build:impact": "remotion render src/index.ts ImpactSlicerViz out/impact-slicer.mp4",
     "preview": "remotion preview src/index.ts"
   },
   "keywords": ["remotion", "video", "coderabbit", "intro"],

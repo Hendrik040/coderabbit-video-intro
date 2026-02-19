@@ -8,6 +8,9 @@
     "build": "remotion render src/index.ts CodeRabbitIntro out/intro.mp4",
     "build:intro": "remotion render src/index.ts CodeRabbitIntro out/intro.mp4",
     "build:impact": "remotion render src/index.ts ImpactSlicerViz out/impact-slicer.mp4",
+    "build:ast": "remotion render src/index.ts ASTWalkViz out/ast-walk.mp4",
+    "build:compare": "remotion render src/index.ts ReviewSystemsCompare out/review-compare.mp4",
+    "build:quote": "remotion render src/index.ts CustomerQuote out/customer-quote.mp4",
     "preview": "remotion preview src/index.ts"
   },
   "keywords": ["remotion", "video", "coderabbit", "intro"],

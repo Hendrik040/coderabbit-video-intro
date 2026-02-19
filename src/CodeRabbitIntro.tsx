@@ -422,7 +422,7 @@ export const CodeRabbitIntro: React.FC = () => {
               textShadow: `0 0 20px ${COLORS.orange}40`,
             }}
           >
-            How to Build an AI Code Review Agent
+            How to Fix your Coding Agents' Vibes
           </span>
         </div>
 

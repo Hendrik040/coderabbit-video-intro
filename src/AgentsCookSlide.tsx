@@ -1,8 +1,8 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
-import { loadFont } from "@remotion/google-fonts/PlusJakartaSans";
+import { loadFont } from "@remotion/google-fonts/IBMPlexMono";
 
-const { fontFamily: FONT_FAMILY } = loadFont("normal", { weights: ["600"] });
+const { fontFamily: FONT_FAMILY } = loadFont("normal", { weights: ["500"] });
 
 const LINE_1 = "Let your agents cook...";
 const TEXT_COLOR = "#FF570A";
@@ -60,7 +60,7 @@ export const AgentsCookSlide: React.FC = () => {
         style={{
           fontFamily: FONT_FAMILY,
           fontSize: FONT_SIZE,
-          fontWeight: 600,
+          fontWeight: 500,
           color: TEXT_COLOR,
           textAlign: "center",
           lineHeight: 1.4,

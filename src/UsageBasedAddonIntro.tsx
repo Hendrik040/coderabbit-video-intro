@@ -1,8 +1,8 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
-import { loadFont } from "@remotion/google-fonts/PlusJakartaSans";
+import { loadFont } from "@remotion/google-fonts/IBMPlexMono";
 
-const { fontFamily: FONT_FAMILY } = loadFont("normal", { weights: ["600"] });
+const { fontFamily: FONT_FAMILY } = loadFont("normal", { weights: ["500"] });
 
 const LINE_1 = "Introducing";
 const LINE_2 = "CodeRabbit Usage-based Add-on";
@@ -77,7 +77,7 @@ export const UsageBasedAddonIntro: React.FC = () => {
           alignItems: "center",
           fontFamily: FONT_FAMILY,
           fontSize: FONT_SIZE,
-          fontWeight: 600,
+          fontWeight: 500,
           color: TEXT_COLOR,
           lineHeight: 1.4,
         }}

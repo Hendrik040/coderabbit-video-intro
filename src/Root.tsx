@@ -10,6 +10,7 @@ import { ConfigOnMainViz } from "./ConfigOnMainViz";
 import { BreakingChangeAlarm } from "./BreakingChangeAlarm";
 import { UsageBasedAddonIntro } from "./UsageBasedAddonIntro";
 import { AgentsCookSlide } from "./AgentsCookSlide";
+import { AlternativeCook } from "./AlternativeCook";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -107,6 +108,14 @@ export const RemotionRoot: React.FC = () => {
         id="AgentsCookSlide"
         component={AgentsCookSlide}
         durationInFrames={270}
+        fps={30}
+        width={1920}
+        height={1080}
+      />
+      <Composition
+        id="AlternativeCook"
+        component={AlternativeCook}
+        durationInFrames={240}
         fps={30}
         width={1920}
         height={1080}

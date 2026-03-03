@@ -9,6 +9,7 @@ import { MultiRepoVizV2 } from "./MultiRepoVizV2";
 import { ConfigOnMainViz } from "./ConfigOnMainViz";
 import { BreakingChangeAlarm } from "./BreakingChangeAlarm";
 import { UsageBasedAddonIntro } from "./UsageBasedAddonIntro";
+import { AgentsCookSlide } from "./AgentsCookSlide";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -98,6 +99,14 @@ export const RemotionRoot: React.FC = () => {
         id="UsageBasedAddonIntro"
         component={UsageBasedAddonIntro}
         durationInFrames={300}
+        fps={30}
+        width={1920}
+        height={1080}
+      />
+      <Composition
+        id="AgentsCookSlide"
+        component={AgentsCookSlide}
+        durationInFrames={270}
         fps={30}
         width={1920}
         height={1080}

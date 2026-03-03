@@ -8,7 +8,7 @@ const LINE_1 = "Introducing";
 const LINE_2 = "CodeRabbit Usage-based Add-on";
 const ALL_CHARS = LINE_1 + LINE_2;
 
-const TEXT_COLOR = "#CC6B1A";
+const TEXT_COLOR = "#FF570A";
 const BG_COLOR = "#000000";
 const FONT_SIZE = 90;
 const START_FRAME = 18; // Brief black screen before typing

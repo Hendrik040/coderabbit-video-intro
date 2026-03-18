@@ -32,7 +32,7 @@ const PILL_W_FULL = NODE_GAP * 2 + NODE_R * 2 + 56;
 
 // ─── Agent definitions ────────────────────────────────────────────────────────
 const AGENTS = [
-  { file: "agent-chatgpt.png", label: "ChatGPT",  bg: "#000000", pad: 6 },
+  { file: "agent-chatgpt.png", label: "ChatGPT",  bg: "#FFFFFF", pad: 6 },
   { file: "agent-gemini.png",  label: "Gemini",   bg: "#FFFFFF", pad: 4 },
   { file: "agent-cursor.png",  label: "Cursor",   bg: "#FFFFFF", pad: 2 },
   { file: "agent-claude.png",  label: "Claude",   bg: "#FFFFFF", pad: 4 },

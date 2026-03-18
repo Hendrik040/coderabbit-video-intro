@@ -170,22 +170,7 @@ const renderCtxIcon = (type: string, cx: number, cy: number) => {
     case "diamond":
       return <polygon points={`${ix},${cy - 9} ${ix + 9},${cy} ${ix},${cy + 9} ${ix - 9},${cy}`} fill={CR_ORANGE} />;
     case "slack":
-      // Slack logo: 4 offset rounded bars forming a cross with open center,
-      // each bar has a small circle cap at its outer corner.
-      return <>
-        {/* Bar 1: horizontal, upper-left */}
-        <rect x={ix-8} y={cy-6} width={9} height={4} rx={2} fill={CR_ORANGE} />
-        <circle cx={ix-6} cy={cy-8.5} r={2.5} fill={CR_ORANGE} />
-        {/* Bar 2: vertical, upper-right */}
-        <rect x={ix+3} y={cy-8} width={4} height={9} rx={2} fill={CR_ORANGE} />
-        <circle cx={ix+8.5} cy={cy-6} r={2.5} fill={CR_ORANGE} />
-        {/* Bar 3: horizontal, lower-right */}
-        <rect x={ix-1} y={cy+2} width={9} height={4} rx={2} fill={CR_ORANGE} />
-        <circle cx={ix+6} cy={cy+8.5} r={2.5} fill={CR_ORANGE} />
-        {/* Bar 4: vertical, lower-left */}
-        <rect x={ix-7} y={cy-1} width={4} height={9} rx={2} fill={CR_ORANGE} />
-        <circle cx={ix-8.5} cy={cy+6} r={2.5} fill={CR_ORANGE} />
-      </>;
+      return <image href={staticFile("slack.png")} x={ix - 10} y={cy - 10} width={20} height={20} />;
     default: return null;
   }
 };

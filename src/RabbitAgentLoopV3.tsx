@@ -44,11 +44,19 @@ const T = {
   morphStart:  36,
   morphEnd:    80,
   logoFadeOut: 82,
-  dotsGrow:    88,
-  dotsMax:    140,
-  labelsIn:   144,
-  loopStart:  188,
+  dotsGrow:    88,   // PLAN starts here
+  loopStart:   196,
 };
+
+// ─── Sequential node reveal timing ───────────────────────────────────────────
+const NODE_GROW_DUR  = 16;
+const PLAN_GROW      = 88;
+const CODE_GROW      = 116;
+const REVIEW_GROW    = 144;
+const NODE_GROW_STARTS = [PLAN_GROW, CODE_GROW, REVIEW_GROW];
+const ARROW1_IN      = PLAN_GROW   + NODE_GROW_DUR + 2;  // 106: after PLAN done
+const ARROW2_IN      = CODE_GROW   + NODE_GROW_DUR + 2;  // 134: after CODE done
+const ARROW_FADE_DUR = 12;
 
 const AGENT_DWELL  = 52;
 const AGENT_XFADE  = 14;
@@ -122,17 +130,19 @@ const Pill: React.FC<{ frame: number; fps: number }> = ({ frame, fps }) => {
     easing: Easing.out(Easing.cubic),
   });
 
-  const nodeR = interpolate(frame, [T.dotsGrow, T.dotsMax], [3, NODE_R], {
-    extrapolateLeft: "clamp", extrapolateRight: "clamp",
-    easing: Easing.out(Easing.cubic),
-  });
+  // Each node grows independently — PLAN first, then CODE, then REVIEW
+  const getNodeR = (i: number) => interpolate(
+    frame,
+    [NODE_GROW_STARTS[i], NODE_GROW_STARTS[i] + NODE_GROW_DUR],
+    [0, NODE_R],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.cubic) }
+  );
 
   const logoOp = interpolate(frame, [T.logoFadeOut, T.logoFadeOut + 22], [1, 0], {
     extrapolateLeft: "clamp", extrapolateRight: "clamp",
   });
 
-  const pillOp   = fi(frame, T.circleIn, 18);
-  const labelsOp = fi(frame, T.labelsIn, 18);
+  const pillOp = fi(frame, T.circleIn, 18);
 
   const pillLeft = CX - pillWidth / 2;
   const pillTop  = CY - PILL_H / 2;
@@ -172,7 +182,7 @@ const Pill: React.FC<{ frame: number; fps: number }> = ({ frame, fps }) => {
         </div>
       )}
 
-      {/* White node circles */}
+      {/* White node circles — sequential: PLAN → CODE → REVIEW */}
       <svg
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
         viewBox="0 0 1920 1080"
@@ -182,47 +192,54 @@ const Pill: React.FC<{ frame: number; fps: number }> = ({ frame, fps }) => {
           <circle
             key={i}
             cx={n.x} cy={CY}
-            r={Math.max(0, nodeR)}
+            r={Math.max(0, getNodeR(i))}
             fill="white"
-            opacity={fi(frame, T.dotsGrow + i * 6, 12)}
           />
         ))}
       </svg>
 
-      {/* PLAN / CODE / REVIEW labels */}
-      {labelsOp > 0.01 && nodes.map((n, i) => (
-        <div
-          key={i}
-          style={{
-            position: "absolute",
-            left: n.x, top: CY,
-            transform: "translate(-50%, -50%)",
-            opacity: labelsOp,
-            pointerEvents: "none",
-          }}
-        >
-          <span
+      {/* PLAN / CODE / REVIEW labels — each fades in after its circle is fully grown */}
+      {nodes.map((n, i) => {
+        const labelOp = fi(frame, NODE_GROW_STARTS[i] + NODE_GROW_DUR, 12);
+        if (labelOp < 0.01) return null;
+        return (
+          <div
+            key={i}
             style={{
-              fontSize: 12,
-              fontFamily: FONT_FAMILY,
-              fontWeight: 500,
-              color: CR_ORANGE,
-              letterSpacing: 2,
+              position: "absolute",
+              left: n.x, top: CY,
+              transform: "translate(-50%, -50%)",
+              opacity: labelOp,
+              pointerEvents: "none",
             }}
           >
-            {n.label}
-          </span>
-        </div>
-      ))}
+            <span
+              style={{
+                fontSize: 12,
+                fontFamily: FONT_FAMILY,
+                fontWeight: 500,
+                color: CR_ORANGE,
+                letterSpacing: 2,
+              }}
+            >
+              {n.label}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 };
 
 // ─── Flow arrows ──────────────────────────────────────────────────────────────
 const FlowArrows: React.FC<{ frame: number }> = ({ frame }) => {
-  const op = fi(frame, T.labelsIn + 16, 14);
-  if (op < 0.01) return null;
-  const scroll = (frame - T.labelsIn) * 2.8;
+  const arrow1Op = fi(frame, ARROW1_IN, ARROW_FADE_DUR);
+  const arrow2Op = fi(frame, ARROW2_IN, ARROW_FADE_DUR);
+  if (arrow1Op < 0.01 && arrow2Op < 0.01) return null;
+
+  // Each arrow scrolls from the moment it appears
+  const scroll1 = Math.max(0, frame - ARROW1_IN) * 2.8;
+  const scroll2 = Math.max(0, frame - ARROW2_IN) * 2.8;
 
   return (
     <svg
@@ -234,19 +251,21 @@ const FlowArrows: React.FC<{ frame: number }> = ({ frame }) => {
           <path d="M0,0 L0,6 L6,3 Z" fill="rgba(255,255,255,0.36)" />
         </marker>
       </defs>
+      {/* PLAN → CODE: appears after PLAN circle is done */}
       <line
         x1={PLAN_X + NODE_R + 5} y1={CY}
         x2={CODE_X - NODE_R - 5} y2={CY}
         stroke="rgba(255,255,255,0.28)" strokeWidth="1.8"
-        strokeDasharray="8 6" strokeDashoffset={-scroll}
-        markerEnd="url(#v3-arr)" opacity={op}
+        strokeDasharray="8 6" strokeDashoffset={-scroll1}
+        markerEnd="url(#v3-arr)" opacity={arrow1Op}
       />
+      {/* CODE → REVIEW: appears after CODE circle is done */}
       <line
         x1={CODE_X + NODE_R + 5} y1={CY}
         x2={REVIEW_X - NODE_R - 5} y2={CY}
         stroke="rgba(255,255,255,0.28)" strokeWidth="1.8"
-        strokeDasharray="8 6" strokeDashoffset={-scroll}
-        markerEnd="url(#v3-arr)" opacity={op}
+        strokeDasharray="8 6" strokeDashoffset={-scroll2}
+        markerEnd="url(#v3-arr)" opacity={arrow2Op}
       />
     </svg>
   );

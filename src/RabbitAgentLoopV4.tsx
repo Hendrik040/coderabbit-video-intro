@@ -133,7 +133,6 @@ const CTX_SPOKES = [
   { x: 465, y: 470 },  // 2 → GITHUB         (upper-right)
   { x: 340, y: 595 },  // 3 → JIRA           (lower-left)
   { x: 420, y: 615 },  // 4 → SLACK          (lower-center)
-  { x: 487, y: 524 },  // 5 → unlabeled      (right)
 ];
 
 // Source boxes: center, edge anchor toward spoke, icon type
@@ -269,13 +268,6 @@ const ContextSection: React.FC<{ frame: number }> = ({ frame }) => {
             </g>
           );
         })}
-
-        {/* ── "KNOWLEDGE GRAPH" label ── */}
-        <text x={CTX_HUB_X} y={CTX_HUB_Y + 110} textAnchor="middle"
-          fontFamily={FONT_FAMILY} fontSize={9} fontWeight={500}
-          fill="rgba(255,255,255,0.22)" letterSpacing={2.5} opacity={graphOp}>
-          KNOWLEDGE GRAPH
-        </text>
 
         {/* ── Orange animated flow line: hub → PLAN node ── */}
         <line

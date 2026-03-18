@@ -48,12 +48,12 @@ const T = {
 };
 
 // ─── Context graph timing (slides in after morph, before nodes) ───────────────
-const CONTEXT_IN       = 85;   // whole section slides in
-const CONTEXT_SRC_A    = 94;   // "CODEBASE" box appears
-const CONTEXT_SRC_B    = 110;  // "ORGANIZATION" box appears
-const CONTEXT_GRAPH_IN = 120;  // knowledge graph cluster appears
-const CONTEXT_FLOW_IN  = 134;  // orange flow line toward PLAN appears
-const CONTEXT_FADE_START = 232; // dims as agents start
+const CONTEXT_IN         = 85;   // whole section slides in
+const CONTEXT_GRAPH_IN   = 94;   // hub + spoke nodes appear
+// Per-source stagger: CODEBASE, DOCUMENTATION, GITHUB, JIRA, SLACK
+const CONTEXT_SRC_TIMINGS = [100, 109, 118, 127, 136];
+const CONTEXT_FLOW_IN    = 142;  // orange flow line toward PLAN
+const CONTEXT_FADE_START = 232;  // dims as agents start
 const CONTEXT_FADE_END   = 255;
 
 // ─── Sequential node timing (shifted to follow context phase) ─────────────────
@@ -118,58 +118,87 @@ const Background: React.FC = () => (
   </>
 );
 
-// ─── Context graph (slides in from left) ─────────────────────────────────────
-// Layout (screen coords, translateX=0):
-//   Source boxes: left side, x≈190
-//   Knowledge graph: center of context area, x≈430
-//   Orange flow line: graph hub → PLAN circle left edge
-const CTX_HUB = { x: 430, y: 540 };
-const CTX_NODES = [
-  { x: 430, y: 540 },   // 0: hub (orange)
-  { x: 368, y: 496 },   // 1: upper-left
-  { x: 492, y: 496 },   // 2: upper-right
-  { x: 368, y: 584 },   // 3: lower-left
-  { x: 492, y: 584 },   // 4: lower-right
-  { x: 430, y: 452 },   // 5: top satellite
+// ─── Context graph geometry ───────────────────────────────────────────────────
+// Hub at center; 6 spokes radiate at organic/irregular angles.
+// 5 spokes connect to labeled source boxes; 1 is an unlabeled satellite.
+const CTX_HUB_X = 405;
+const CTX_HUB_Y = 535;
+const CTX_BOX_W = 152;
+const CTX_BOX_H = 50;
+
+// Spoke end nodes (~80-90px from hub, irregular angles)
+const CTX_SPOKES = [
+  { x: 325, y: 520 },  // 0 → CODEBASE      (left, slightly up)
+  { x: 350, y: 465 },  // 1 → DOCUMENTATION  (upper-left)
+  { x: 465, y: 470 },  // 2 → GITHUB         (upper-right)
+  { x: 340, y: 595 },  // 3 → JIRA           (lower-left)
+  { x: 420, y: 615 },  // 4 → SLACK          (lower-center)
+  { x: 487, y: 524 },  // 5 → unlabeled      (right)
 ];
-const CTX_EDGES = [[0,1],[0,2],[0,3],[0,4],[1,2],[3,4],[1,5],[2,5]];
-const BOX_W = 148;
-const BOX_H = 50;
-const SRC_A = { cx: 188, cy: 463 };  // CODEBASE
-const SRC_B = { cx: 188, cy: 617 };  // ORGANIZATION
+
+// Source boxes: center, edge anchor toward spoke, icon type
+const CTX_SOURCES = [
+  { label: "CODEBASE",      icon: "code",    cx: 145, cy: 498, si: 0, ax: 221, ay: 507 },
+  { label: "DOCUMENTATION", icon: "bars",    cx: 195, cy: 330, si: 1, ax: 224, ay: 355 },
+  { label: "GITHUB",        icon: "fork",    cx: 580, cy: 315, si: 2, ax: 562, ay: 340 },
+  { label: "JIRA",          icon: "diamond", cx: 155, cy: 670, si: 3, ax: 217, ay: 645 },
+  { label: "SLACK",         icon: "hash",    cx: 410, cy: 750, si: 4, ax: 412, ay: 725 },
+];
+
+// Icon renderer — called inside SVG context
+const renderCtxIcon = (type: string, cx: number, cy: number) => {
+  const ix = cx - 36; // icon center x
+  switch (type) {
+    case "code":
+      return <text x={ix} y={cy} textAnchor="middle" dominantBaseline="middle" fontFamily={FONT_FAMILY} fontSize={14} fontWeight={500} fill={CR_ORANGE}>{"</>"}</text>;
+    case "bars":
+      return <>
+        <rect x={ix - 9} y={cy - 7} width={18} height={3} rx={1.5} fill={CR_ORANGE} />
+        <rect x={ix - 9} y={cy - 1} width={18} height={3} rx={1.5} fill={CR_ORANGE} opacity={0.7} />
+        <rect x={ix - 9} y={cy + 5} width={18} height={3} rx={1.5} fill={CR_ORANGE} opacity={0.4} />
+      </>;
+    case "fork":
+      // Git branch: base node + two branch nodes connected by Y-lines
+      return <>
+        <circle cx={ix}    cy={cy + 7} r={2.8} fill="none" stroke={CR_ORANGE} strokeWidth={1.5} />
+        <circle cx={ix - 8} cy={cy - 7} r={2.8} fill="none" stroke={CR_ORANGE} strokeWidth={1.5} />
+        <circle cx={ix + 8} cy={cy - 7} r={2.8} fill="none" stroke={CR_ORANGE} strokeWidth={1.5} />
+        <line x1={ix}    y1={cy + 4}  x2={ix}    y2={cy - 1} stroke={CR_ORANGE} strokeWidth={1.5} />
+        <line x1={ix}    y1={cy - 1}  x2={ix - 8} y2={cy - 4} stroke={CR_ORANGE} strokeWidth={1.5} />
+        <line x1={ix}    y1={cy - 1}  x2={ix + 8} y2={cy - 4} stroke={CR_ORANGE} strokeWidth={1.5} />
+      </>;
+    case "diamond":
+      return <polygon points={`${ix},${cy - 9} ${ix + 9},${cy} ${ix},${cy + 9} ${ix - 9},${cy}`} fill={CR_ORANGE} />;
+    case "hash":
+      return <>
+        <line x1={ix - 5} y1={cy - 8} x2={ix - 5} y2={cy + 8}  stroke={CR_ORANGE} strokeWidth={2} strokeLinecap="round" />
+        <line x1={ix + 5} y1={cy - 8} x2={ix + 5} y2={cy + 8}  stroke={CR_ORANGE} strokeWidth={2} strokeLinecap="round" />
+        <line x1={ix - 10} y1={cy - 2} x2={ix + 10} y2={cy - 2} stroke={CR_ORANGE} strokeWidth={2} strokeLinecap="round" />
+        <line x1={ix - 10} y1={cy + 4} x2={ix + 10} y2={cy + 4} stroke={CR_ORANGE} strokeWidth={2} strokeLinecap="round" />
+      </>;
+    default: return null;
+  }
+};
 
 const ContextSection: React.FC<{ frame: number }> = ({ frame }) => {
   const slideX = interpolate(frame, [CONTEXT_IN, CONTEXT_IN + 24], [-360, 0], {
     extrapolateLeft: "clamp", extrapolateRight: "clamp",
     easing: Easing.out(Easing.cubic),
   });
-
-  const masterOp = fi(frame, CONTEXT_IN, 14);
-  const fadeOut  = interpolate(frame, [CONTEXT_FADE_START, CONTEXT_FADE_END], [1, 0], {
+  const masterOp   = fi(frame, CONTEXT_IN, 14);
+  const fadeOut    = interpolate(frame, [CONTEXT_FADE_START, CONTEXT_FADE_END], [1, 0], {
     extrapolateLeft: "clamp", extrapolateRight: "clamp",
   });
   const opacity = masterOp * fadeOut;
   if (opacity < 0.01) return null;
 
-  const srcAOp    = fi(frame, CONTEXT_SRC_A, 14);
-  const srcBOp    = fi(frame, CONTEXT_SRC_B, 14);
-  const graphOp   = fi(frame, CONTEXT_GRAPH_IN, 18);
-  const flowOp    = fi(frame, CONTEXT_FLOW_IN, 16);
+  const graphOp    = fi(frame, CONTEXT_GRAPH_IN, 18);
+  const flowOp     = fi(frame, CONTEXT_FLOW_IN, 16);
   const flowScroll = Math.max(0, frame - CONTEXT_FLOW_IN) * 3.5;
 
   return (
-    <div
-      style={{
-        position: "absolute", inset: 0,
-        transform: `translateX(${slideX}px)`,
-        opacity,
-        pointerEvents: "none",
-      }}
-    >
-      <svg
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
-        viewBox="0 0 1920 1080"
-      >
+    <div style={{ position: "absolute", inset: 0, transform: `translateX(${slideX}px)`, opacity, pointerEvents: "none" }}>
+      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} viewBox="0 0 1920 1080">
         <defs>
           <marker id="v4-flow-arr" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
             <path d="M0,0 L0,7 L7,3.5 Z" fill={CR_ORANGE} />
@@ -181,124 +210,82 @@ const ContextSection: React.FC<{ frame: number }> = ({ frame }) => {
         </defs>
 
         {/* ── "BUILDING CONTEXT" header ── */}
-        <text
-          x={310} y={392}
-          textAnchor="middle"
-          fontFamily={FONT_FAMILY} fontSize={10} fontWeight={500}
-          fill="rgba(255,255,255,0.22)" letterSpacing={3}
-          opacity={graphOp}
-        >
+        <text x={380} y={268} textAnchor="middle" fontFamily={FONT_FAMILY} fontSize={10}
+          fontWeight={500} fill="rgba(255,255,255,0.22)" letterSpacing={3} opacity={graphOp}>
           BUILDING CONTEXT
         </text>
 
-        {/* ── Source box A: CODEBASE ── */}
-        <g opacity={srcAOp}>
-          <rect
-            x={SRC_A.cx - BOX_W / 2} y={SRC_A.cy - BOX_H / 2}
-            width={BOX_W} height={BOX_H} rx={8}
-            fill="rgba(0,0,0,0.55)" stroke="rgba(255,255,255,0.28)" strokeWidth={1.5}
-          />
-          {/* code icon */}
-          <text
-            x={SRC_A.cx - 28} y={SRC_A.cy + 1}
-            dominantBaseline="middle"
-            fontFamily={FONT_FAMILY} fontSize={15} fontWeight={500}
-            fill={CR_ORANGE}
-          >{"</>"}</text>
-          {/* label */}
-          <text
-            x={SRC_A.cx + 14} y={SRC_A.cy + 1}
-            dominantBaseline="middle"
-            fontFamily={FONT_FAMILY} fontSize={11} fontWeight={500}
-            fill="rgba(255,255,255,0.72)" letterSpacing={1.5}
-          >CODEBASE</text>
-        </g>
-
-        {/* ── Source box B: ORGANIZATION ── */}
-        <g opacity={srcBOp}>
-          <rect
-            x={SRC_B.cx - BOX_W / 2} y={SRC_B.cy - BOX_H / 2}
-            width={BOX_W} height={BOX_H} rx={8}
-            fill="rgba(0,0,0,0.55)" stroke="rgba(255,255,255,0.28)" strokeWidth={1.5}
-          />
-          {/* org icon — simple stacked lines */}
-          <rect x={SRC_B.cx - 36} y={SRC_B.cy - 7} width={14} height={3} rx={1.5} fill={CR_ORANGE} />
-          <rect x={SRC_B.cx - 36} y={SRC_B.cy + 1} width={14} height={3} rx={1.5} fill={CR_ORANGE} opacity={0.7} />
-          <rect x={SRC_B.cx - 36} y={SRC_B.cy + 9} width={14} height={3} rx={1.5} fill={CR_ORANGE} opacity={0.4} />
-          <text
-            x={SRC_B.cx - 14} y={SRC_B.cy + 1}
-            dominantBaseline="middle"
-            fontFamily={FONT_FAMILY} fontSize={11} fontWeight={500}
-            fill="rgba(255,255,255,0.72)" letterSpacing={1.5}
-          >ORGANIZATION</text>
-        </g>
-
-        {/* ── Dashed lines: sources → graph nodes ── */}
-        <line
-          x1={SRC_A.cx + BOX_W / 2} y1={SRC_A.cy}
-          x2={CTX_NODES[1].x} y2={CTX_NODES[1].y}
-          stroke="rgba(255,255,255,0.18)" strokeWidth={1.2}
-          strokeDasharray="5 4"
-          opacity={Math.min(srcAOp, graphOp)}
-        />
-        <line
-          x1={SRC_B.cx + BOX_W / 2} y1={SRC_B.cy}
-          x2={CTX_NODES[3].x} y2={CTX_NODES[3].y}
-          stroke="rgba(255,255,255,0.18)" strokeWidth={1.2}
-          strokeDasharray="5 4"
-          opacity={Math.min(srcBOp, graphOp)}
-        />
-
-        {/* ── Knowledge graph edges ── */}
-        {CTX_EDGES.map(([a, b], i) => (
-          <line
-            key={i}
-            x1={CTX_NODES[a].x} y1={CTX_NODES[a].y}
-            x2={CTX_NODES[b].x} y2={CTX_NODES[b].y}
-            stroke="rgba(255,255,255,0.18)" strokeWidth={1}
+        {/* ── Hub → spoke lines ── */}
+        {CTX_SPOKES.map((sn, i) => (
+          <line key={i}
+            x1={CTX_HUB_X} y1={CTX_HUB_Y} x2={sn.x} y2={sn.y}
+            stroke="rgba(255,255,255,0.22)" strokeWidth={1.2}
             opacity={graphOp}
           />
         ))}
 
-        {/* ── Knowledge graph nodes ── */}
-        {CTX_NODES.map((n, i) => (
-          i === 0 ? (
-            // Hub: orange glow
-            <circle
-              key={i}
-              cx={n.x} cy={n.y} r={11}
-              fill={CR_ORANGE}
-              opacity={graphOp}
-              filter="url(#v4-hub-glow)"
-            />
-          ) : (
-            <circle
-              key={i}
-              cx={n.x} cy={n.y} r={i === 5 ? 5 : 7}
-              fill="rgba(0,0,0,0)"
-              stroke="rgba(255,255,255,0.45)" strokeWidth={1.5}
-              opacity={graphOp}
-            />
-          )
+        {/* ── Spoke end nodes ── */}
+        {CTX_SPOKES.map((sn, i) => (
+          <circle key={i} cx={sn.x} cy={sn.y} r={i === 5 ? 5 : 7}
+            fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.42)" strokeWidth={1.5}
+            opacity={graphOp}
+          />
         ))}
 
-        {/* ── "KNOWLEDGE GRAPH" label below cluster ── */}
-        <text
-          x={CTX_HUB.x} y={CTX_HUB.y + 108}
-          textAnchor="middle"
-          fontFamily={FONT_FAMILY} fontSize={9} fontWeight={500}
-          fill="rgba(255,255,255,0.25)" letterSpacing={2.5}
-          opacity={graphOp}
-        >KNOWLEDGE GRAPH</text>
+        {/* ── Hub (orange glow) ── */}
+        <circle cx={CTX_HUB_X} cy={CTX_HUB_Y} r={11}
+          fill={CR_ORANGE} opacity={graphOp} filter="url(#v4-hub-glow)"
+        />
 
-        {/* ── Orange flow line: context graph → PLAN node ── */}
+        {/* ── Source boxes — each staggered, connection line + box + icon + label ── */}
+        {CTX_SOURCES.map((src, i) => {
+          const srcOp = fi(frame, CONTEXT_SRC_TIMINGS[i], 14);
+          if (srcOp < 0.01) return null;
+          const sn = CTX_SPOKES[src.si];
+          const isDoc = src.label === "DOCUMENTATION";
+          return (
+            <g key={i}>
+              {/* Spoke node → box anchor: dashed connector */}
+              <line
+                x1={sn.x} y1={sn.y} x2={src.ax} y2={src.ay}
+                stroke="rgba(255,255,255,0.18)" strokeWidth={1.2} strokeDasharray="5 4"
+                opacity={Math.min(srcOp, graphOp)}
+              />
+              {/* Box */}
+              <rect
+                x={src.cx - CTX_BOX_W / 2} y={src.cy - CTX_BOX_H / 2}
+                width={CTX_BOX_W} height={CTX_BOX_H} rx={8}
+                fill="rgba(0,0,0,0.6)" stroke="rgba(255,255,255,0.28)" strokeWidth={1.5}
+                opacity={srcOp}
+              />
+              {/* Icon */}
+              <g opacity={srcOp}>{renderCtxIcon(src.icon, src.cx, src.cy)}</g>
+              {/* Label */}
+              <text
+                x={src.cx - 18} y={src.cy + 1}
+                dominantBaseline="middle" fontFamily={FONT_FAMILY}
+                fontSize={isDoc ? 9 : 10} fontWeight={500}
+                fill="rgba(255,255,255,0.72)"
+                letterSpacing={isDoc ? 0.5 : 1.5}
+                opacity={srcOp}
+              >{src.label}</text>
+            </g>
+          );
+        })}
+
+        {/* ── "KNOWLEDGE GRAPH" label ── */}
+        <text x={CTX_HUB_X} y={CTX_HUB_Y + 110} textAnchor="middle"
+          fontFamily={FONT_FAMILY} fontSize={9} fontWeight={500}
+          fill="rgba(255,255,255,0.22)" letterSpacing={2.5} opacity={graphOp}>
+          KNOWLEDGE GRAPH
+        </text>
+
+        {/* ── Orange animated flow line: hub → PLAN node ── */}
         <line
-          x1={CTX_NODES[0].x + 14} y1={CY}
-          x2={PLAN_X - NODE_R - 6} y2={CY}
-          stroke={CR_ORANGE}
-          strokeWidth={2}
-          strokeDasharray="10 6"
-          strokeDashoffset={-flowScroll}
+          x1={CTX_HUB_X + 14} y1={CTX_HUB_Y}
+          x2={PLAN_X - NODE_R - 6} y2={CTX_HUB_Y}
+          stroke={CR_ORANGE} strokeWidth={2}
+          strokeDasharray="10 6" strokeDashoffset={-flowScroll}
           markerEnd="url(#v4-flow-arr)"
           opacity={flowOp * 0.82}
         />

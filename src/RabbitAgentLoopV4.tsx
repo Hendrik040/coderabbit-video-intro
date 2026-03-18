@@ -142,7 +142,7 @@ const CTX_SOURCES = [
   { label: "DOCUMENTATION", icon: "bars",    cx: 195, cy: 330, si: 1, ax: 224, ay: 355 },
   { label: "GITHUB",        icon: "fork",    cx: 580, cy: 315, si: 2, ax: 562, ay: 340 },
   { label: "JIRA",          icon: "diamond", cx: 155, cy: 670, si: 3, ax: 217, ay: 645 },
-  { label: "SLACK",         icon: "hash",    cx: 410, cy: 750, si: 4, ax: 412, ay: 725 },
+  { label: "SLACK",         icon: "slack",   cx: 410, cy: 750, si: 4, ax: 412, ay: 725 },
 ];
 
 // Icon renderer — called inside SVG context
@@ -169,12 +169,22 @@ const renderCtxIcon = (type: string, cx: number, cy: number) => {
       </>;
     case "diamond":
       return <polygon points={`${ix},${cy - 9} ${ix + 9},${cy} ${ix},${cy + 9} ${ix - 9},${cy}`} fill={CR_ORANGE} />;
-    case "hash":
+    case "slack":
+      // Slack logo: 4 offset rounded bars forming a cross with open center,
+      // each bar has a small circle cap at its outer corner.
       return <>
-        <line x1={ix - 5} y1={cy - 8} x2={ix - 5} y2={cy + 8}  stroke={CR_ORANGE} strokeWidth={2} strokeLinecap="round" />
-        <line x1={ix + 5} y1={cy - 8} x2={ix + 5} y2={cy + 8}  stroke={CR_ORANGE} strokeWidth={2} strokeLinecap="round" />
-        <line x1={ix - 10} y1={cy - 2} x2={ix + 10} y2={cy - 2} stroke={CR_ORANGE} strokeWidth={2} strokeLinecap="round" />
-        <line x1={ix - 10} y1={cy + 4} x2={ix + 10} y2={cy + 4} stroke={CR_ORANGE} strokeWidth={2} strokeLinecap="round" />
+        {/* Bar 1: horizontal, upper-left */}
+        <rect x={ix-8} y={cy-6} width={9} height={4} rx={2} fill={CR_ORANGE} />
+        <circle cx={ix-6} cy={cy-8.5} r={2.5} fill={CR_ORANGE} />
+        {/* Bar 2: vertical, upper-right */}
+        <rect x={ix+3} y={cy-8} width={4} height={9} rx={2} fill={CR_ORANGE} />
+        <circle cx={ix+8.5} cy={cy-6} r={2.5} fill={CR_ORANGE} />
+        {/* Bar 3: horizontal, lower-right */}
+        <rect x={ix-1} y={cy+2} width={9} height={4} rx={2} fill={CR_ORANGE} />
+        <circle cx={ix+6} cy={cy+8.5} r={2.5} fill={CR_ORANGE} />
+        {/* Bar 4: vertical, lower-left */}
+        <rect x={ix-7} y={cy-1} width={4} height={9} rx={2} fill={CR_ORANGE} />
+        <circle cx={ix-8.5} cy={cy+6} r={2.5} fill={CR_ORANGE} />
       </>;
     default: return null;
   }

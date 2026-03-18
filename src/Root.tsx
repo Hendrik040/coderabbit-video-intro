@@ -16,6 +16,10 @@ import { UsageBasedAddonIntro } from "./UsageBasedAddonIntro";
 import { AgentsCookSlide } from "./AgentsCookSlide";
 import { AlternativeCook } from "./AlternativeCook";
 import { CodeRabbitShips } from "./CodeRabbitShips";
+import { InnerOuterLoopViz, INNER_OUTER_LOOP_VIZ_TOTAL_FRAMES } from "./InnerOuterLoopViz";
+import { RabbitAgentLoopViz, RABBIT_AGENT_LOOP_TOTAL_FRAMES } from "./RabbitAgentLoopViz";
+import { RabbitAgentLoopV2, RABBIT_AGENT_LOOP_V2_TOTAL_FRAMES } from "./RabbitAgentLoopV2";
+import { RabbitAgentLoopV3, RABBIT_AGENT_LOOP_V3_TOTAL_FRAMES } from "./RabbitAgentLoopV3";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -161,6 +165,38 @@ export const RemotionRoot: React.FC = () => {
         id="CodeRabbitShips"
         component={CodeRabbitShips}
         durationInFrames={330}
+        fps={30}
+        width={1920}
+        height={1080}
+      />
+      <Composition
+        id="InnerOuterLoopViz"
+        component={InnerOuterLoopViz}
+        durationInFrames={INNER_OUTER_LOOP_VIZ_TOTAL_FRAMES}
+        fps={30}
+        width={1920}
+        height={1080}
+      />
+      <Composition
+        id="RabbitAgentLoopViz"
+        component={RabbitAgentLoopViz}
+        durationInFrames={RABBIT_AGENT_LOOP_TOTAL_FRAMES}
+        fps={30}
+        width={1920}
+        height={1080}
+      />
+      <Composition
+        id="RabbitAgentLoopV2"
+        component={RabbitAgentLoopV2}
+        durationInFrames={RABBIT_AGENT_LOOP_V2_TOTAL_FRAMES}
+        fps={30}
+        width={1920}
+        height={1080}
+      />
+      <Composition
+        id="RabbitAgentLoopV3"
+        component={RabbitAgentLoopV3}
+        durationInFrames={RABBIT_AGENT_LOOP_V3_TOTAL_FRAMES}
         fps={30}
         width={1920}
         height={1080}

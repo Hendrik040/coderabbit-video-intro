@@ -11,7 +11,10 @@
     "build:ast": "remotion render src/index.ts ASTWalkViz out/ast-walk.mp4",
     "build:compare": "remotion render src/index.ts ReviewSystemsCompare out/review-compare.mp4",
     "build:quote": "remotion render src/index.ts CustomerQuote out/customer-quote.mp4",
-    "preview": "remotion preview src/index.ts"
+    "preview": "remotion preview src/index.ts",
+    "build:loop": "remotion render src/index.ts InnerOuterLoopViz out/inner-outer-loop.mp4",
+    "build:agentloop": "remotion render src/index.ts RabbitAgentLoopViz out/rabbit-agent-loop.mp4",
+    "build:agentloopv2": "remotion render src/index.ts RabbitAgentLoopV2 out/rabbit-agent-loop-v2.mp4"
   },
   "keywords": [
     "remotion",

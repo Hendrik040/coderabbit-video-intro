@@ -67,11 +67,20 @@ const ARROW2_IN        = CODE_GROW  + NODE_GROW_DUR + 2;  // 194
 const ARROW_FADE_DUR   = 12;
 
 // ─── Agent cycling ────────────────────────────────────────────────────────────
-const AGENT_DWELL = 52;
-const AGENT_XFADE = 14;
-const AGENT_CYCLE = AGENT_DWELL + AGENT_XFADE; // 66 frames ≈ 2.2s
+const AGENT_DWELL = 26;
+const AGENT_XFADE = 7;
+const AGENT_CYCLE = AGENT_DWELL + AGENT_XFADE; // 33 frames ≈ 1.1s
 
-export const RABBIT_AGENT_LOOP_V4_TOTAL_FRAMES = 480;
+// ─── End sequence ─────────────────────────────────────────────────────────────
+// Stop after last agent's dwell (no xfade into ChatGPT again)
+const AGENTS_DONE       = 242 + (AGENTS.length - 1) * AGENT_CYCLE + AGENT_DWELL; // 367
+const COLLAPSE_START    = AGENTS_DONE;
+const COLLAPSE_DUR      = 24;
+const LOGO_REFADE_IN    = COLLAPSE_START + 14;               // logo reappears as pill shrinks
+const FINAL_FADE_START  = COLLAPSE_START + COLLAPSE_DUR + 20; // brief hold, then fade to black
+const FINAL_FADE_DUR    = 24;
+
+export const RABBIT_AGENT_LOOP_V4_TOTAL_FRAMES = FINAL_FADE_START + FINAL_FADE_DUR + 15;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fi(frame: number, start: number, dur = 14) {
@@ -286,21 +295,33 @@ const ContextSection: React.FC<{ frame: number }> = ({ frame }) => {
 // ─── Pill + nodes ─────────────────────────────────────────────────────────────
 const Pill: React.FC<{ frame: number; fps: number }> = ({ frame, fps }) => {
 
-  const pillWidth = interpolate(frame, [T.morphStart, T.morphEnd], [PILL_H, PILL_W_FULL], {
+  const pillWidthIn = interpolate(frame, [T.morphStart, T.morphEnd], [PILL_H, PILL_W_FULL], {
     extrapolateLeft: "clamp", extrapolateRight: "clamp",
     easing: Easing.out(Easing.cubic),
   });
+  const pillWidthOut = interpolate(frame, [COLLAPSE_START, COLLAPSE_START + COLLAPSE_DUR], [PILL_W_FULL, PILL_H], {
+    extrapolateLeft: "clamp", extrapolateRight: "clamp",
+    easing: Easing.inOut(Easing.cubic),
+  });
+  const pillWidth = frame < COLLAPSE_START ? pillWidthIn : pillWidthOut;
 
+  const nodesFade = interpolate(frame, [COLLAPSE_START, COLLAPSE_START + 16], [1, 0], {
+    extrapolateLeft: "clamp", extrapolateRight: "clamp",
+  });
   const getNodeR = (i: number) => interpolate(
     frame,
     [NODE_GROW_STARTS[i], NODE_GROW_STARTS[i] + NODE_GROW_DUR],
     [0, NODE_R],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.cubic) }
-  );
+  ) * nodesFade;
 
-  const logoOp = interpolate(frame, [T.logoFadeOut, T.logoFadeOut + 22], [1, 0], {
+  const logoFadeOut = interpolate(frame, [T.logoFadeOut, T.logoFadeOut + 22], [1, 0], {
     extrapolateLeft: "clamp", extrapolateRight: "clamp",
   });
+  const logoFadeIn = interpolate(frame, [LOGO_REFADE_IN, LOGO_REFADE_IN + 16], [0, 1], {
+    extrapolateLeft: "clamp", extrapolateRight: "clamp",
+  });
+  const logoOp = frame < COLLAPSE_START ? logoFadeOut : logoFadeIn;
 
   const pillOp  = fi(frame, T.circleIn, 18);
   const pillLeft = CX - pillWidth / 2;
@@ -359,7 +380,7 @@ const Pill: React.FC<{ frame: number; fps: number }> = ({ frame, fps }) => {
 
       {/* PLAN / CODE / REVIEW labels */}
       {nodes.map((n, i) => {
-        const labelOp = fi(frame, NODE_GROW_STARTS[i] + NODE_GROW_DUR, 12);
+        const labelOp = fi(frame, NODE_GROW_STARTS[i] + NODE_GROW_DUR, 12) * nodesFade;
         if (labelOp < 0.01) return null;
         return (
           <div
@@ -384,8 +405,11 @@ const Pill: React.FC<{ frame: number; fps: number }> = ({ frame, fps }) => {
 
 // ─── Flow arrows (PLAN→CODE, CODE→REVIEW) ─────────────────────────────────────
 const FlowArrows: React.FC<{ frame: number }> = ({ frame }) => {
-  const arrow1Op = fi(frame, ARROW1_IN, ARROW_FADE_DUR);
-  const arrow2Op = fi(frame, ARROW2_IN, ARROW_FADE_DUR);
+  const collapsingFade = interpolate(frame, [COLLAPSE_START, COLLAPSE_START + 16], [1, 0], {
+    extrapolateLeft: "clamp", extrapolateRight: "clamp",
+  });
+  const arrow1Op = fi(frame, ARROW1_IN, ARROW_FADE_DUR) * collapsingFade;
+  const arrow2Op = fi(frame, ARROW2_IN, ARROW_FADE_DUR) * collapsingFade;
   if (arrow1Op < 0.01 && arrow2Op < 0.01) return null;
 
   const scroll1 = Math.max(0, frame - ARROW1_IN) * 2.8;
@@ -421,7 +445,7 @@ const FlowArrows: React.FC<{ frame: number }> = ({ frame }) => {
 
 // ─── CODE node glow ───────────────────────────────────────────────────────────
 const CodeGlow: React.FC<{ frame: number }> = ({ frame }) => {
-  if (frame < T.loopStart) return null;
+  if (frame < T.loopStart || frame >= AGENTS_DONE) return null;
   const loopFrame = frame - T.loopStart;
   const pulse     = Math.sin(loopFrame * 0.13) * 0.5 + 0.5;
   const op        = fi(frame, T.loopStart, 16) * 0.6;
@@ -450,14 +474,15 @@ const CodeGlow: React.FC<{ frame: number }> = ({ frame }) => {
 
 // ─── Agent cycling at CODE ─────────────────────────────────────────────────────
 const AgentAtCode: React.FC<{ frame: number }> = ({ frame }) => {
-  if (frame < T.loopStart) return null;
+  if (frame < T.loopStart || frame >= AGENTS_DONE) return null;
 
   const loopFrame    = frame - T.loopStart;
-  const agentIdx     = Math.floor(loopFrame / AGENT_CYCLE) % AGENTS.length;
+  const agentIdx     = Math.min(Math.floor(loopFrame / AGENT_CYCLE), AGENTS.length - 1);
+  const isLastAgent  = agentIdx === AGENTS.length - 1;
   const nextIdx      = (agentIdx + 1) % AGENTS.length;
   const frameInCycle = loopFrame % AGENT_CYCLE;
 
-  const currentOp = interpolate(frameInCycle, [AGENT_DWELL, AGENT_DWELL + AGENT_XFADE], [1, 0], {
+  const currentOp = isLastAgent ? 1 : interpolate(frameInCycle, [AGENT_DWELL, AGENT_DWELL + AGENT_XFADE], [1, 0], {
     extrapolateLeft: "clamp", extrapolateRight: "clamp",
   });
   const nextOp = interpolate(frameInCycle, [AGENT_DWELL, AGENT_DWELL + AGENT_XFADE], [0, 1], {
@@ -466,7 +491,7 @@ const AgentAtCode: React.FC<{ frame: number }> = ({ frame }) => {
 
   const pulse   = 1 + Math.sin(frameInCycle * 0.18) * 0.028;
   const ICON    = NODE_R * 2 - 10;
-  const inXfade = frameInCycle >= AGENT_DWELL;
+  const inXfade = !isLastAgent && frameInCycle >= AGENT_DWELL;
 
   const icon = (idx: number, op: number, sc = 1) => {
     const a = AGENTS[idx];
@@ -499,13 +524,14 @@ const AgentAtCode: React.FC<{ frame: number }> = ({ frame }) => {
 
 // ─── Agent name below CODE ─────────────────────────────────────────────────────
 const AgentLabel: React.FC<{ frame: number }> = ({ frame }) => {
-  if (frame < T.loopStart) return null;
+  if (frame < T.loopStart || frame >= AGENTS_DONE) return null;
   const loopFrame    = frame - T.loopStart;
-  const agentIdx     = Math.floor(loopFrame / AGENT_CYCLE) % AGENTS.length;
+  const agentIdx     = Math.min(Math.floor(loopFrame / AGENT_CYCLE), AGENTS.length - 1);
+  const isLastAgent  = agentIdx === AGENTS.length - 1;
   const frameInCycle = loopFrame % AGENT_CYCLE;
   const op = Math.min(
     fi(frame, T.loopStart, 10),
-    interpolate(frameInCycle, [AGENT_DWELL + 2, AGENT_DWELL + AGENT_XFADE], [1, 0], {
+    isLastAgent ? 1 : interpolate(frameInCycle, [AGENT_DWELL + 2, AGENT_DWELL + AGENT_XFADE], [1, 0], {
       extrapolateLeft: "clamp", extrapolateRight: "clamp",
     })
   );
@@ -520,11 +546,12 @@ const AgentLabel: React.FC<{ frame: number }> = ({ frame }) => {
 
 // ─── Agent queue (right side) ─────────────────────────────────────────────────
 const AgentQueue: React.FC<{ frame: number }> = ({ frame }) => {
-  const op = fi(frame, T.loopStart + 10, 20);
+  const fadeOut = interpolate(frame, [AGENTS_DONE - 10, AGENTS_DONE], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const op = fi(frame, T.loopStart + 10, 20) * fadeOut;
   if (op < 0.01) return null;
 
   const loopFrame = frame - T.loopStart;
-  const activeIdx = Math.floor(loopFrame / AGENT_CYCLE) % AGENTS.length;
+  const activeIdx = Math.min(Math.floor(loopFrame / AGENT_CYCLE), AGENTS.length - 1);
   const ICON  = 42;
   const GAP   = 12;
   const totalH = AGENTS.length * ICON + (AGENTS.length - 1) * GAP;
@@ -562,7 +589,7 @@ const StageLabel: React.FC<{ frame: number }> = ({ frame }) => {
     { start: T.morphStart,  end: CONTEXT_IN,      text: "Plan · Code · Review" },
     { start: CONTEXT_IN,    end: PLAN_GROW,        text: "Building context" },
     { start: PLAN_GROW,     end: T.loopStart,     text: "Plan · Code · Review" },
-    { start: T.loopStart,   end: 9999,            text: "Coding agents in the loop" },
+    { start: T.loopStart,   end: AGENTS_DONE,      text: "Coding agents in the loop" },
   ];
   const s = stages.find(x => frame >= x.start && frame < x.end);
   if (!s) return null;
@@ -584,6 +611,10 @@ export const RabbitAgentLoopV4: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
+  const finalFadeOp = interpolate(frame, [FINAL_FADE_START, FINAL_FADE_START + FINAL_FADE_DUR], [0, 1], {
+    extrapolateLeft: "clamp", extrapolateRight: "clamp",
+  });
+
   return (
     <AbsoluteFill style={{ overflow: "hidden" }}>
       <Background />
@@ -595,6 +626,9 @@ export const RabbitAgentLoopV4: React.FC = () => {
       <AgentLabel frame={frame} />
       <AgentQueue frame={frame} />
       <StageLabel frame={frame} />
+      {finalFadeOp > 0 && (
+        <AbsoluteFill style={{ backgroundColor: BG_COLOR, opacity: finalFadeOp }} />
+      )}
     </AbsoluteFill>
   );
 };
